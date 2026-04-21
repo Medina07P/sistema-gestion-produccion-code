@@ -14,6 +14,7 @@ import com.sistema.report.ReportePorDia;
 import com.sistema.report.ReportePorLote;
 import com.sistema.report.ReportePorRecolector;
 import com.sistema.service.*;
+import com.sistema.service.IUsuarioService;
 import com.sistema.service.impl.UsuarioServiceImpl;
 import com.sistema.util.ConexionBD;
 
@@ -24,29 +25,9 @@ import java.awt.event.WindowEvent;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * Ventana principal de la aplicación.
- *
- * ── RESPONSABILIDADES ─────────────────────────────────────────
- *  1. Inicializar la aplicación con Look & Feel del sistema.
- *  2. Realizar el "cableado" (Dependency Injection manual):
- *       DAOs → Servicios → Paneles
- *     Sin frameworks: se ve claramente quién depende de quién.
- *  3. Componer la UI: JTabbedPane con un panel por módulo.
- *  4. Cerrar la conexión a la BD al salir de la aplicación.
- *
- * ── INYECCIÓN DE DEPENDENCIAS (Manual) ────────────────────────
- * Este es el único lugar donde se instancian implementaciones
- * concretas (LoteDAOImpl, etc.). El resto del sistema trabaja
- * sólo con interfaces. Principio DIP en toda su expresión.
- *
- * ── POLIMORFISMO (Reportes) ───────────────────────────────────
- * Los tres reportes se registran como List<IReporteGenerador>.
- * ReportePanel los trata a todos igual vía la interfaz común.
- */
 public class MainFrame extends JFrame {
 
-    public MainFrame(String nombreUsuario) {
+    public MainFrame(String nombreUsuario, Usuario usuario) {
         // ── 1. Wiring: instanciar DAOs (implementaciones concretas) ──
         ILoteDAO       loteDAO       = new LoteDAOImpl();
         IRecolectorDAO recolectorDAO = new RecolectorDAOImpl();
@@ -68,7 +49,7 @@ public class MainFrame extends JFrame {
         // ── 4. Paneles (capa UI) ──────────────────────────────────────
         LotePanel       lotePanel       = new LotePanel(loteService);
         RecolectorPanel recolectorPanel = new RecolectorPanel(recolectorService, loteService);
-        PesajePanel     pesajePanel     = new PesajePanel(pesajeService, recolectorService, loteService);
+        PesajePanel     pesajePanel     = new PesajePanel(pesajeService, recolectorService, loteService, usuario);
         PagoPanel       pagoPanel       = new PagoPanel(pagoService);
         ReportePanel    reportePanel    = new ReportePanel(reportes);
 
@@ -80,14 +61,10 @@ public class MainFrame extends JFrame {
         tabs.addTab("💰  Pagos",         pagoPanel);
         tabs.addTab("📊  Reportes",      reportePanel);
 
-        // Al cambiar de pestaña → refrescar datos del panel destino
         tabs.addChangeListener(e -> {
             int idx = tabs.getSelectedIndex();
-            if (idx == 1) {
-                recolectorPanel.refrescar();
-            } else if (idx == 2) {
-                pesajePanel.refrescar();
-            }
+            if (idx == 1) recolectorPanel.refrescar();
+            else if (idx == 2) pesajePanel.refrescar();
         });
 
         // ── 6. Configuración del JFrame ───────────────────────────────
@@ -129,7 +106,6 @@ public class MainFrame extends JFrame {
         subtitulo.setForeground(new Color(133, 193, 233));
         subtitulo.setFont(subtitulo.getFont().deriveFont(12f));
 
-        // Muestra el nombre del usuario autenticado en la esquina derecha
         JLabel lblUsuario = new JLabel("👤 " + nombreUsuario);
         lblUsuario.setForeground(new Color(133, 193, 233));
         lblUsuario.setFont(lblUsuario.getFont().deriveFont(12f));
@@ -154,8 +130,8 @@ public class MainFrame extends JFrame {
         SwingUtilities.invokeLater(() -> {
             try {
                 // 1. Construir dependencias del login
-                IUsuarioDAO         usuarioDAO     = new UsuarioDAOImpl();
-                UsuarioServiceImpl  usuarioService = new UsuarioServiceImpl(usuarioDAO);
+                IUsuarioDAO     usuarioDAO     = new UsuarioDAOImpl();
+                IUsuarioService usuarioService = new UsuarioServiceImpl(usuarioDAO);
 
                 // 2. Mostrar ventana de login (modal — bloquea hasta cerrarse)
                 LoginFrame loginFrame = new LoginFrame(usuarioService);
@@ -164,9 +140,8 @@ public class MainFrame extends JFrame {
                 // 3. Si autenticó correctamente, abrir la aplicación principal
                 Usuario usuario = loginFrame.getUsuarioAutenticado();
                 if (usuario != null) {
-                    new MainFrame(usuario.getNombre()).setVisible(true);
+                    new MainFrame(usuario.getNombre(), usuario).setVisible(true);
                 }
-                // Si usuario == null, LoginFrame ya llamó System.exit(0)
 
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(null,

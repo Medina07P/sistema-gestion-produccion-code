@@ -7,6 +7,7 @@ import com.sistema.exception.NegocioException;
 import com.sistema.model.Lote;
 import com.sistema.model.Pesaje;
 import com.sistema.model.Recolector;
+import com.sistema.model.Usuario;                   // ← NUEVO import
 import com.sistema.util.Validador;
 
 import java.time.LocalDate;
@@ -33,19 +34,21 @@ public class PesajeService implements IPesajeService {
     /**
      * Valida y registra un pesaje.
      *
-     * @param recolectorId ID del recolector seleccionado en la UI
-     * @param loteId       ID del lote seleccionado en la UI
-     * @param fechaStr     Texto de la fecha en formato AAAA-MM-DD
-     * @param kilosStr     Texto de los kilos (ej: "50.5")
+     * @param recolectorId  ID del recolector seleccionado en la UI
+     * @param loteId        ID del lote seleccionado en la UI
+     * @param fechaStr      Texto de la fecha en formato AAAA-MM-DD
+     * @param kilosStr      Texto de los kilos (ej: "50.5")
+     * @param usuarioActual Usuario autenticado que realiza el registro  ← NUEVO
      */
     @Override
-    public void registrar(Long recolectorId, Long loteId, String fechaStr, String kilosStr) {
+    public void registrar(Long recolectorId, Long loteId,
+                          String fechaStr, String kilosStr,
+                          Usuario usuarioActual) {               // ← NUEVO parámetro
+
         // ── Parseo y validación de tipos ──────────────────────
-        double kilos = Validador.parsearDouble(kilosStr, "kilos");
+        double    kilos = Validador.parsearDouble(kilosStr, "kilos");
         Validador.positivo(kilos, "kilos");
-
         LocalDate fecha = Validador.parsearFecha(fechaStr, "fecha");
-
         if (fecha.isAfter(LocalDate.now())) {
             throw new NegocioException("No se puede registrar un pesaje con fecha futura.");
         }
@@ -64,7 +67,8 @@ public class PesajeService implements IPesajeService {
             throw new NegocioException("El lote seleccionado no está activo.");
         }
 
-        pesajeDAO.guardar(new Pesaje(recolector, lote, fecha, kilos));
+        // ← CAMBIO: se pasa usuarioActual al constructor de Pesaje
+        pesajeDAO.guardar(new Pesaje(recolector, lote, fecha, kilos, usuarioActual));
     }
 
     @Override

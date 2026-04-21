@@ -4,7 +4,9 @@ import com.sistema.dao.IUsuarioDAO;
 import com.sistema.model.Usuario;
 import com.sistema.util.ConexionBD;
 
-import javax.persistence.*;
+
+// Poner esto:
+import jakarta.persistence.*;
 
 public class UsuarioDAOImpl extends GenericDAOImpl<Usuario, Long> implements IUsuarioDAO {
 
