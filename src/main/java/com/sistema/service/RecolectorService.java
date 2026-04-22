@@ -96,4 +96,11 @@ public class RecolectorService implements IRecolectorService {
     public Recolector buscarPorId(Long id) {
         return recolectorDAO.buscarPorId(id);
     }
+    @Override
+    public void activar(Long id) {
+        Recolector r = recolectorDAO.buscarPorId(id);
+        if (r == null) throw new NegocioException("Recolector no encontrado.");
+        r.setActivo(true);
+        recolectorDAO.actualizar(r);
+    }
 }

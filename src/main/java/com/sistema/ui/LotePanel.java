@@ -9,28 +9,17 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
 
-/**
- * Panel de gestión de Lotes.
- * Estructura: formulario (norte) + tabla (centro) + botones (sur).
- *
- * Sólo conoce ILoteService (interfaz). Principio DIP aplicado.
- * No tiene lógica de negocio: sólo captura datos y delega al servicio.
- */
 public class LotePanel extends JPanel {
 
-    // ── Servicio (inyectado) ──────────────────────────────────
     private final ILoteService loteService;
 
-    // ── Componentes del formulario ────────────────────────────
     private final JTextField txtCodigo      = new JTextField(10);
     private final JTextField txtDescripcion = new JTextField(25);
 
-    // ── Tabla ─────────────────────────────────────────────────
     private final DefaultTableModel modeloTabla;
     private final JTable            tabla;
-    private Long idSeleccionado = null;   // ID del registro seleccionado en tabla
+    private Long idSeleccionado = null;
 
-    // ── Columnas de la tabla ──────────────────────────────────
     private static final String[] COLUMNAS = {"ID", "Código", "Descripción", "Estado"};
 
     public LotePanel(ILoteService loteService) {
@@ -43,13 +32,12 @@ public class LotePanel extends JPanel {
         };
         tabla = new JTable(modeloTabla);
         tabla.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        tabla.getColumnModel().getColumn(0).setMaxWidth(50);   // ID angosto
+        tabla.getColumnModel().getColumn(0).setMaxWidth(50);
 
         add(crearPanelFormulario(), BorderLayout.NORTH);
         add(new JScrollPane(tabla),  BorderLayout.CENTER);
         add(crearPanelBotones(),     BorderLayout.SOUTH);
 
-        // Al seleccionar fila → cargar en formulario
         tabla.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) cargarSeleccion();
         });
@@ -57,12 +45,10 @@ public class LotePanel extends JPanel {
         refrescarTabla();
     }
 
-    // ── Construcción de subpaneles ────────────────────────────
-
     private JPanel crearPanelFormulario() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 5));
         panel.setBorder(BorderFactory.createTitledBorder("Datos del Lote"));
-        panel.add(new JLabel("Código*:"));    panel.add(txtCodigo);
+        panel.add(new JLabel("Código*:"));     panel.add(txtCodigo);
         panel.add(new JLabel("Descripción:")); panel.add(txtDescripcion);
         return panel;
     }
@@ -71,22 +57,25 @@ public class LotePanel extends JPanel {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 5));
         JButton btnGuardar    = new JButton("Guardar");
         JButton btnActualizar = new JButton("Actualizar");
+        JButton btnActivar    = new JButton("Activar");      // ← NUEVO
         JButton btnDesactivar = new JButton("Desactivar");
         JButton btnLimpiar    = new JButton("Limpiar");
 
         btnGuardar.addActionListener(e    -> guardar());
         btnActualizar.addActionListener(e -> actualizar());
+        btnActivar.addActionListener(e    -> activar());     // ← NUEVO
         btnDesactivar.addActionListener(e -> desactivar());
         btnLimpiar.addActionListener(e    -> limpiar());
 
         panel.add(btnGuardar);
         panel.add(btnActualizar);
+        panel.add(btnActivar);                               // ← NUEVO
         panel.add(btnDesactivar);
         panel.add(btnLimpiar);
         return panel;
     }
 
-    // ── Acciones de los botones ───────────────────────────────
+    // ── Acciones ──────────────────────────────────────────────
 
     private void guardar() {
         try {
@@ -107,6 +96,23 @@ public class LotePanel extends JPanel {
             Lote lote = loteService.buscarPorId(idSeleccionado);
             loteService.actualizar(lote, txtCodigo.getText(), txtDescripcion.getText());
             mostrarExito("Lote actualizado correctamente.");
+            limpiar();
+            refrescarTabla();
+        } catch (NegocioException ex) {
+            mostrarError(ex.getMessage());
+        } catch (Exception ex) {
+            mostrarErrorInterno(ex);
+        }
+    }
+
+    private void activar() {                                 // ← NUEVO
+        if (idSeleccionado == null) { mostrarError("Seleccione un lote de la tabla."); return; }
+        int confirm = JOptionPane.showConfirmDialog(this,
+            "¿Activar este lote?", "Confirmar", JOptionPane.YES_NO_OPTION);
+        if (confirm != JOptionPane.YES_OPTION) return;
+        try {
+            loteService.activar(idSeleccionado);
+            mostrarExito("Lote activado correctamente.");
             limpiar();
             refrescarTabla();
         } catch (NegocioException ex) {
@@ -145,8 +151,7 @@ public class LotePanel extends JPanel {
 
     private void refrescarTabla() {
         modeloTabla.setRowCount(0);
-        List<Lote> lotes = loteService.listarTodos();
-        for (Lote l : lotes) {
+        for (Lote l : loteService.listarTodos()) {
             modeloTabla.addRow(new Object[]{
                 l.getId(),
                 l.getCodigo(),
@@ -164,14 +169,7 @@ public class LotePanel extends JPanel {
         txtDescripcion.setText((String) modeloTabla.getValueAt(fila, 2));
     }
 
-    // ── Métodos públicos para acceso desde otros paneles ──────
-
-    /** Actualiza el panel si se llama desde otra pestaña (ej: al crear un lote). */
-    public void refrescar() {
-        refrescarTabla();
-    }
-
-    // ── Mensajes ──────────────────────────────────────────────
+    public void refrescar() { refrescarTabla(); }
 
     private void mostrarExito(String msg) {
         JOptionPane.showMessageDialog(this, msg, "Éxito", JOptionPane.INFORMATION_MESSAGE);
@@ -180,8 +178,7 @@ public class LotePanel extends JPanel {
         JOptionPane.showMessageDialog(this, msg, "Error de validación", JOptionPane.WARNING_MESSAGE);
     }
     private void mostrarErrorInterno(Exception ex) {
-        JOptionPane.showMessageDialog(this,
-            "Error interno: " + ex.getMessage(),
+        JOptionPane.showMessageDialog(this, "Error interno: " + ex.getMessage(),
             "Error del sistema", JOptionPane.ERROR_MESSAGE);
         ex.printStackTrace();
     }

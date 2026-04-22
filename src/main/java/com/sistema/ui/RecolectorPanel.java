@@ -11,18 +11,14 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
 
-/**
- * Panel de gestión de Recolectores.
- * Incluye un JComboBox poblado con lotes activos para la asignación.
- */
 public class RecolectorPanel extends JPanel {
 
     private final IRecolectorService recolectorService;
     private final ILoteService       loteService;
 
-    private final JTextField  txtNombre  = new JTextField(20);
-    private final JTextField  txtCedula  = new JTextField(15);
-    private final JComboBox<Lote> cmbLote = new JComboBox<>();
+    private final JTextField      txtNombre = new JTextField(20);
+    private final JTextField      txtCedula = new JTextField(15);
+    private final JComboBox<Lote> cmbLote   = new JComboBox<>();
 
     private final DefaultTableModel modeloTabla;
     private final JTable            tabla;
@@ -58,9 +54,9 @@ public class RecolectorPanel extends JPanel {
     private JPanel crearPanelFormulario() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 5));
         panel.setBorder(BorderFactory.createTitledBorder("Datos del Recolector"));
-        panel.add(new JLabel("Nombre*:"));  panel.add(txtNombre);
-        panel.add(new JLabel("Cédula*:"));  panel.add(txtCedula);
-        panel.add(new JLabel("Lote:"));     panel.add(cmbLote);
+        panel.add(new JLabel("Nombre*:")); panel.add(txtNombre);
+        panel.add(new JLabel("Cédula*:")); panel.add(txtCedula);
+        panel.add(new JLabel("Lote:"));    panel.add(cmbLote);
         return panel;
     }
 
@@ -68,16 +64,21 @@ public class RecolectorPanel extends JPanel {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 5));
         JButton btnGuardar    = new JButton("Guardar");
         JButton btnActualizar = new JButton("Actualizar");
+        JButton btnActivar    = new JButton("Activar");      // ← NUEVO
         JButton btnDesactivar = new JButton("Desactivar");
         JButton btnLimpiar    = new JButton("Limpiar");
 
         btnGuardar.addActionListener(e    -> guardar());
         btnActualizar.addActionListener(e -> actualizar());
+        btnActivar.addActionListener(e    -> activar());     // ← NUEVO
         btnDesactivar.addActionListener(e -> desactivar());
         btnLimpiar.addActionListener(e    -> limpiar());
 
-        panel.add(btnGuardar); panel.add(btnActualizar);
-        panel.add(btnDesactivar); panel.add(btnLimpiar);
+        panel.add(btnGuardar);
+        panel.add(btnActualizar);
+        panel.add(btnActivar);                               // ← NUEVO
+        panel.add(btnDesactivar);
+        panel.add(btnLimpiar);
         return panel;
     }
 
@@ -113,6 +114,23 @@ public class RecolectorPanel extends JPanel {
         }
     }
 
+    private void activar() {                                 // ← NUEVO
+        if (idSeleccionado == null) { mostrarError("Seleccione un recolector."); return; }
+        int c = JOptionPane.showConfirmDialog(this,
+            "¿Activar este recolector?", "Confirmar", JOptionPane.YES_NO_OPTION);
+        if (c != JOptionPane.YES_OPTION) return;
+        try {
+            recolectorService.activar(idSeleccionado);
+            mostrarExito("Recolector activado correctamente.");
+            limpiar();
+            refrescarTabla();
+        } catch (NegocioException ex) {
+            mostrarError(ex.getMessage());
+        } catch (Exception ex) {
+            mostrarErrorInterno(ex);
+        }
+    }
+
     private void desactivar() {
         if (idSeleccionado == null) { mostrarError("Seleccione un recolector."); return; }
         int c = JOptionPane.showConfirmDialog(this,
@@ -131,7 +149,8 @@ public class RecolectorPanel extends JPanel {
     }
 
     private void limpiar() {
-        txtNombre.setText(""); txtCedula.setText("");
+        txtNombre.setText("");
+        txtCedula.setText("");
         cmbLote.setSelectedIndex(0);
         idSeleccionado = null;
         tabla.clearSelection();
@@ -156,7 +175,6 @@ public class RecolectorPanel extends JPanel {
         idSeleccionado = (Long) modeloTabla.getValueAt(fila, 0);
         txtNombre.setText((String) modeloTabla.getValueAt(fila, 1));
         txtCedula.setText((String) modeloTabla.getValueAt(fila, 2));
-        // Seleccionar lote en combo
         String codigoLote = (String) modeloTabla.getValueAt(fila, 3);
         for (int i = 0; i < cmbLote.getItemCount(); i++) {
             Lote l = cmbLote.getItemAt(i);
@@ -168,10 +186,8 @@ public class RecolectorPanel extends JPanel {
 
     private void cargarLotesEnCombo() {
         cmbLote.removeAllItems();
-        cmbLote.addItem(null);   // Opción vacía
-        for (Lote l : loteService.listarActivos()) {
-            cmbLote.addItem(l);
-        }
+        cmbLote.addItem(null);
+        for (Lote l : loteService.listarActivos()) cmbLote.addItem(l);
     }
 
     private Long getLoteIdSeleccionado() {

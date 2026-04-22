@@ -42,19 +42,6 @@ CREATE TABLE IF NOT EXISTS PESAJES (
     CONSTRAINT chk_kilos_positivos  CHECK (kilos > 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- ── Índices para rendimiento en consultas de reportes ─────────
-CREATE INDEX IF NOT EXISTS idx_pesajes_fecha
-    ON PESAJES(fecha);
-CREATE INDEX IF NOT EXISTS idx_pesajes_recolector
-    ON PESAJES(recolector_id);
-CREATE INDEX IF NOT EXISTS idx_pesajes_lote
-    ON PESAJES(lote_id);
-
--- ── Datos de ejemplo (opcional, borrar si no se necesitan) ────
-INSERT IGNORE INTO LOTES (codigo, descripcion) VALUES
-    ('A1', 'Lote norte - Sector 1'),
-    ('A2', 'Lote norte - Sector 2'),
-    ('B1', 'Lote sur - Sector 1');
 
 -- ============================================================
 --  PATCH: Módulo de Login
@@ -71,6 +58,22 @@ CREATE TABLE IF NOT EXISTS USUARIOS (
     PRIMARY KEY (id)
 );
 
+-- ── Índices para rendimiento en consultas de reportes ─────────
+CREATE INDEX IF NOT EXISTS idx_pesajes_fecha
+    ON PESAJES(fecha);
+CREATE INDEX IF NOT EXISTS idx_pesajes_recolector
+    ON PESAJES(recolector_id);
+CREATE INDEX IF NOT EXISTS idx_pesajes_lote
+    ON PESAJES(lote_id);
+
+-- ── Datos de ejemplo (opcional, borrar si no se necesitan) ────
+INSERT IGNORE INTO LOTES (codigo, descripcion) VALUES
+    ('A1', 'Lote norte - Sector 1'),
+    ('A2', 'Lote norte - Sector 2'),
+    ('B1', 'Lote sur - Sector 1');
+
+
+
 -- Contraseña por defecto: Admin1234
 -- SHA-256("Admin1234") = 0a041b9462caa4a31bac3567e0b6e6fd9100787db2ab433d96f6d178cabfce90
 INSERT IGNORE INTO USUARIOS (username, password, nombre, activo)
@@ -81,6 +84,11 @@ VALUES (
     TRUE
 );
 
+
+--Se actualiza el hash
+UPDATE USUARIOS 
+SET password = '60fe74406e7f353ed979f350f2fbb6a2e8690a5fa7d1b0c32983d1d8b3f95f67'
+WHERE username = 'admin';
 --PARA MODIFICAR LA RELACIÓN DE USUARIO A PESAJE PARA SABER
 --QUIEN HIZO EL PESAJE
 -- ============================================================

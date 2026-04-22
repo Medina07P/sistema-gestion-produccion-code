@@ -13,6 +13,7 @@ public interface ILoteService {
     void crear(String codigo, String descripcion);
     void actualizar(Lote lote, String nuevoCodigo, String nuevaDescripcion);
     void desactivar(Long id);
+    void activar(Long id);
     List<Lote> listarTodos();
     List<Lote> listarActivos();
     Lote buscarPorId(Long id);

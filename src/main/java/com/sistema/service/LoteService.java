@@ -81,4 +81,11 @@ public class LoteService implements ILoteService {
     public Lote buscarPorId(Long id) {
         return loteDAO.buscarPorId(id);
     }
+    @Override
+    public void activar(Long id) {
+        Lote lote = loteDAO.buscarPorId(id);
+        if (lote == null) throw new NegocioException("Lote no encontrado.");
+        lote.setActivo(true);
+        loteDAO.actualizar(lote);
+    }
 }
