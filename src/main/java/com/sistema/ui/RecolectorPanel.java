@@ -6,6 +6,8 @@ import com.sistema.model.Recolector;
 import com.sistema.service.ILoteService;
 import com.sistema.service.IRecolectorService;
 
+import com.sistema.util.UIEstilo;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
@@ -31,6 +33,7 @@ public class RecolectorPanel extends JPanel {
         this.loteService       = loteService;
         setLayout(new BorderLayout(5, 5));
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        setBackground(UIEstilo.FONDO);
 
         modeloTabla = new DefaultTableModel(COLUMNAS, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
@@ -38,10 +41,18 @@ public class RecolectorPanel extends JPanel {
         tabla = new JTable(modeloTabla);
         tabla.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         tabla.getColumnModel().getColumn(0).setMaxWidth(50);
+        UIEstilo.aplicarEstiloTabla(tabla);
+
+        UIEstilo.aplicarEstiloCampoTexto(txtNombre);
+        UIEstilo.aplicarEstiloCampoTexto(txtCedula);
+        UIEstilo.aplicarEstiloComboBox(cmbLote);
+
+        JScrollPane scroll = new JScrollPane(tabla);
+        UIEstilo.aplicarEstiloScrollPane(scroll);
 
         add(crearPanelFormulario(), BorderLayout.NORTH);
-        add(new JScrollPane(tabla),  BorderLayout.CENTER);
-        add(crearPanelBotones(),     BorderLayout.SOUTH);
+        add(scroll,                 BorderLayout.CENTER);
+        add(crearPanelBotones(),    BorderLayout.SOUTH);
 
         tabla.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) cargarSeleccion();
@@ -53,7 +64,8 @@ public class RecolectorPanel extends JPanel {
 
     private JPanel crearPanelFormulario() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 5));
-        panel.setBorder(BorderFactory.createTitledBorder("Datos del Recolector"));
+        panel.setBorder(UIEstilo.crearBordeTitulado("Datos del Recolector"));
+        panel.setBackground(UIEstilo.FONDO);
         panel.add(new JLabel("Nombre*:")); panel.add(txtNombre);
         panel.add(new JLabel("Cédula*:")); panel.add(txtCedula);
         panel.add(new JLabel("Lote:"));    panel.add(cmbLote);
@@ -62,21 +74,28 @@ public class RecolectorPanel extends JPanel {
 
     private JPanel crearPanelBotones() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 5));
+        panel.setBackground(UIEstilo.FONDO);
         JButton btnGuardar    = new JButton("Guardar");
         JButton btnActualizar = new JButton("Actualizar");
-        JButton btnActivar    = new JButton("Activar");      // ← NUEVO
+        JButton btnActivar    = new JButton("Activar");
         JButton btnDesactivar = new JButton("Desactivar");
         JButton btnLimpiar    = new JButton("Limpiar");
 
+        UIEstilo.aplicarEstiloBoton(btnGuardar,    UIEstilo.PRIMARIO);
+        UIEstilo.aplicarEstiloBoton(btnActualizar, UIEstilo.PRIMARIO);
+        UIEstilo.aplicarEstiloBoton(btnActivar,    UIEstilo.SECUNDARIO);
+        UIEstilo.aplicarEstiloBoton(btnDesactivar, UIEstilo.ADVERTENCIA);
+        UIEstilo.aplicarEstiloBoton(btnLimpiar,    UIEstilo.NEUTRO);
+
         btnGuardar.addActionListener(e    -> guardar());
         btnActualizar.addActionListener(e -> actualizar());
-        btnActivar.addActionListener(e    -> activar());     // ← NUEVO
+        btnActivar.addActionListener(e    -> activar());
         btnDesactivar.addActionListener(e -> desactivar());
         btnLimpiar.addActionListener(e    -> limpiar());
 
         panel.add(btnGuardar);
         panel.add(btnActualizar);
-        panel.add(btnActivar);                               // ← NUEVO
+        panel.add(btnActivar);
         panel.add(btnDesactivar);
         panel.add(btnLimpiar);
         return panel;

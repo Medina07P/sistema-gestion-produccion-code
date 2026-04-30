@@ -2,6 +2,7 @@ package com.sistema.ui;
 
 import com.sistema.model.Usuario;
 import com.sistema.service.IUsuarioService;
+import com.sistema.util.UIEstilo;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -51,13 +52,15 @@ public class LoginFrame extends JDialog {
     private void buildUI() {
         JPanel root = new JPanel(new BorderLayout(0, 0));
         root.setBorder(new EmptyBorder(32, 40, 28, 40));
+        root.setBackground(UIEstilo.SUPERFICIE);
 
         // Encabezado
         JLabel lblTitulo = new JLabel("Sistema de Recolectores", SwingConstants.CENTER);
-        lblTitulo.setFont(new Font("SansSerif", Font.BOLD, 20));
+        lblTitulo.setFont(UIEstilo.FUENTE_TITULO);
+        lblTitulo.setForeground(UIEstilo.TEXTO_PRIMARIO);
         JLabel lblSub = new JLabel("Ingrese sus credenciales para continuar", SwingConstants.CENTER);
-        lblSub.setFont(new Font("SansSerif", Font.PLAIN, 12));
-        lblSub.setForeground(Color.GRAY);
+        lblSub.setFont(UIEstilo.FUENTE_SUBTITULO);
+        lblSub.setForeground(UIEstilo.TEXTO_SECUNDARIO);
 
         JPanel header = new JPanel(new BorderLayout(0, 6));
         header.add(lblTitulo, BorderLayout.NORTH);
@@ -67,9 +70,13 @@ public class LoginFrame extends JDialog {
         // Formulario
         JPanel form = new JPanel(new GridBagLayout());
         form.setBorder(new EmptyBorder(24, 0, 8, 0));
+        form.setBackground(UIEstilo.SUPERFICIE);
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(6, 4, 6, 4);
         gbc.anchor = GridBagConstraints.WEST;
+
+        UIEstilo.aplicarEstiloCampoTexto(txtUsername);
+        UIEstilo.aplicarEstiloCampoTexto(txtPassword);
 
         gbc.gridx = 0; gbc.gridy = 0;
         form.add(new JLabel("Usuario:"), gbc);
@@ -83,16 +90,13 @@ public class LoginFrame extends JDialog {
 
         gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 2;
         gbc.anchor = GridBagConstraints.CENTER;
-        lblError.setForeground(new Color(180, 30, 30));
-        lblError.setFont(new Font("SansSerif", Font.PLAIN, 11));
+        lblError.setForeground(UIEstilo.ERROR);
+        lblError.setFont(UIEstilo.FUENTE_SUBTITULO);
         form.add(lblError, gbc);
 
         gbc.gridy = 3;
         btnIngresar.setPreferredSize(new Dimension(140, 34));
-        btnIngresar.setBackground(new Color(45, 100, 170));
-        btnIngresar.setForeground(Color.WHITE);
-        btnIngresar.setFocusPainted(false);
-        btnIngresar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        UIEstilo.aplicarEstiloBoton(btnIngresar, UIEstilo.PRIMARIO);
         form.add(btnIngresar, gbc);
 
         root.add(form, BorderLayout.CENTER);

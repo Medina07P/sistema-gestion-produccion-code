@@ -1,7 +1,6 @@
 package com.sistema.ui;
 
 import com.sistema.exception.NegocioException;
-import com.sistema.model.Lote;
 import com.sistema.model.Pesaje;
 import com.sistema.model.Recolector;
 import com.sistema.model.Usuario;
@@ -9,28 +8,26 @@ import com.sistema.service.ILoteService;
 import com.sistema.service.IPesajeService;
 import com.sistema.service.IRecolectorService;
 
+import com.sistema.util.UIEstilo;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.time.LocalDate;
 import java.util.List;
 
-/**
- * Panel de registro de Pesajes.
- * Permite registrar kilos diarios asociando recolector, lote, fecha
- * y el usuario autenticado que realiza el registro.
- */
 public class PesajePanel extends JPanel {
 
     private final IPesajeService     pesajeService;
     private final IRecolectorService recolectorService;
     private final ILoteService       loteService;
-    private final Usuario            usuarioActual;   // ← NUEVO: usuario autenticado
+    private final Usuario            usuarioActual;
 
     private final JComboBox<Recolector> cmbRecolector = new JComboBox<>();
-    private final JComboBox<Lote>       cmbLote       = new JComboBox<>();
     private final JTextField            txtFecha      = new JTextField(12);
     private final JTextField            txtKilos      = new JTextField(8);
+    // ✅ ELIMINADO: txtPrecioPorKilo — el precio se maneja en Pagos
+    // ✅ ELIMINADO: cmbLote — el lote viene del recolector
 
     private final DefaultTableModel modeloTabla;
     private final JTable            tabla;
@@ -41,14 +38,15 @@ public class PesajePanel extends JPanel {
     public PesajePanel(IPesajeService pesajeService,
                        IRecolectorService recolectorService,
                        ILoteService loteService,
-                       Usuario usuarioActual) {          // ← NUEVO parámetro
+                       Usuario usuarioActual) {
         this.pesajeService     = pesajeService;
         this.recolectorService = recolectorService;
         this.loteService       = loteService;
-        this.usuarioActual     = usuarioActual;          // ← NUEVO
+        this.usuarioActual     = usuarioActual;
 
         setLayout(new BorderLayout(5, 5));
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        setBackground(UIEstilo.FONDO);
 
         modeloTabla = new DefaultTableModel(COLUMNAS, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
@@ -56,13 +54,20 @@ public class PesajePanel extends JPanel {
         tabla = new JTable(modeloTabla);
         tabla.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         tabla.getColumnModel().getColumn(0).setMaxWidth(50);
+        UIEstilo.aplicarEstiloTabla(tabla);
 
-        // Fecha por defecto = hoy
+        UIEstilo.aplicarEstiloComboBox(cmbRecolector);
+        UIEstilo.aplicarEstiloCampoTexto(txtFecha);
+        UIEstilo.aplicarEstiloCampoTexto(txtKilos);
+
         txtFecha.setText(LocalDate.now().toString());
 
+        JScrollPane scroll = new JScrollPane(tabla);
+        UIEstilo.aplicarEstiloScrollPane(scroll);
+
         add(crearPanelFormulario(), BorderLayout.NORTH);
-        add(new JScrollPane(tabla),  BorderLayout.CENTER);
-        add(crearPanelBotones(),     BorderLayout.SOUTH);
+        add(scroll,                 BorderLayout.CENTER);
+        add(crearPanelBotones(),    BorderLayout.SOUTH);
 
         tabla.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
@@ -77,19 +82,25 @@ public class PesajePanel extends JPanel {
 
     private JPanel crearPanelFormulario() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 5));
-        panel.setBorder(BorderFactory.createTitledBorder("Registro de Pesaje"));
-        panel.add(new JLabel("Recolector*:"));          panel.add(cmbRecolector);
-        panel.add(new JLabel("Lote*:"));                panel.add(cmbLote);
-        panel.add(new JLabel("Fecha* (AAAA-MM-DD):"));  panel.add(txtFecha);
-        panel.add(new JLabel("Kilos*:"));               panel.add(txtKilos);
+        panel.setBorder(UIEstilo.crearBordeTitulado("Registro de Pesaje"));
+        panel.setBackground(UIEstilo.FONDO);
+        panel.add(new JLabel("Recolector*:"));         panel.add(cmbRecolector);
+        // ✅ ELIMINADO: Lote — se obtiene automáticamente del recolector
+        panel.add(new JLabel("Fecha* (AAAA-MM-DD):")); panel.add(txtFecha);
+        panel.add(new JLabel("Kilos*:"));              panel.add(txtKilos);
         return panel;
     }
 
     private JPanel crearPanelBotones() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 5));
+        panel.setBackground(UIEstilo.FONDO);
         JButton btnRegistrar = new JButton("Registrar Pesaje");
         JButton btnEliminar  = new JButton("Eliminar");
         JButton btnLimpiar   = new JButton("Limpiar");
+
+        UIEstilo.aplicarEstiloBoton(btnRegistrar, UIEstilo.PRIMARIO);
+        UIEstilo.aplicarEstiloBoton(btnEliminar,  UIEstilo.PELIGRO);
+        UIEstilo.aplicarEstiloBoton(btnLimpiar,   UIEstilo.NEUTRO);
 
         btnRegistrar.addActionListener(e -> registrar());
         btnEliminar.addActionListener(e  -> eliminar());
@@ -104,12 +115,10 @@ public class PesajePanel extends JPanel {
     private void registrar() {
         try {
             Recolector r = (Recolector) cmbRecolector.getSelectedItem();
-            Lote l       = (Lote)       cmbLote.getSelectedItem();
             Long recolId = (r != null) ? r.getId() : null;
-            Long loteId  = (l != null) ? l.getId() : null;
 
-            // ← CAMBIO: se pasa usuarioActual para registrar quién hizo el pesaje
-            pesajeService.registrar(recolId, loteId, txtFecha.getText(), txtKilos.getText(), usuarioActual);
+            // ✅ CORREGIDO: sin loteId ni precioPorKilo
+            pesajeService.registrar(recolId, txtFecha.getText(), txtKilos.getText(), usuarioActual);
 
             mostrarExito("Pesaje registrado correctamente.");
             limpiar();
@@ -142,7 +151,7 @@ public class PesajePanel extends JPanel {
         txtFecha.setText(LocalDate.now().toString());
         txtKilos.setText("");
         cmbRecolector.setSelectedIndex(0);
-        cmbLote.setSelectedIndex(0);
+        // ✅ ELIMINADO: cmbLote.setSelectedIndex(0)
         idSeleccionado = null;
         tabla.clearSelection();
     }
@@ -152,17 +161,17 @@ public class PesajePanel extends JPanel {
     private void refrescarTabla() {
         modeloTabla.setRowCount(0);
         for (Pesaje p : pesajeService.listarTodos()) {
-            // ← CAMBIO: columna extra que muestra quién registró el pesaje
             String registradoPor = (p.getRegistradoPor() != null)
-                ? p.getRegistradoPor().getNombre()
-                : "—";
+                ? p.getRegistradoPor().getNombre() : "—";
+            // ✅ El lote se obtiene navegando por el recolector
+            String lote = (p.getLote() != null) ? p.getLote().getCodigo() : "—";
             modeloTabla.addRow(new Object[]{
                 p.getId(),
                 p.getRecolector().getNombre(),
-                p.getLote().getCodigo(),
+                lote,
                 p.getFecha().toString(),
                 String.format("%.2f", p.getKilos()),
-                registradoPor                          // ← NUEVO
+                registradoPor
             });
         }
     }
@@ -171,10 +180,7 @@ public class PesajePanel extends JPanel {
         cmbRecolector.removeAllItems();
         cmbRecolector.addItem(null);
         for (Recolector r : recolectorService.listarActivos()) cmbRecolector.addItem(r);
-
-        cmbLote.removeAllItems();
-        cmbLote.addItem(null);
-        for (Lote l : loteService.listarActivos()) cmbLote.addItem(l);
+        // ✅ ELIMINADO: carga de cmbLote
     }
 
     public void refrescar() {

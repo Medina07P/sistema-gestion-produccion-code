@@ -2,6 +2,7 @@ package com.sistema.ui;
 
 import com.sistema.exception.NegocioException;
 import com.sistema.report.IReporteGenerador;
+import com.sistema.util.UIEstilo;
 import com.sistema.util.Validador;
 
 import javax.swing.*;
@@ -43,12 +44,21 @@ public class ReportePanel extends JPanel {
         this.reportes = reportes;
         setLayout(new BorderLayout(5, 5));
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        setBackground(UIEstilo.FONDO);
 
         modeloTabla = new DefaultTableModel(new String[]{"—"}, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
         tabla = new JTable(modeloTabla);
         tabla.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+        UIEstilo.aplicarEstiloTabla(tabla);
+
+        UIEstilo.aplicarEstiloComboBox(cmbReporte);
+        UIEstilo.aplicarEstiloCampoTexto(txtInicio);
+        UIEstilo.aplicarEstiloCampoTexto(txtFin);
+
+        lblInfo.setFont(UIEstilo.FUENTE_SUBTITULO);
+        lblInfo.setForeground(UIEstilo.TEXTO_SECUNDARIO);
 
         // Fechas por defecto: mes actual
         txtInicio.setText(LocalDate.now().withDayOfMonth(1).toString());
@@ -69,19 +79,21 @@ public class ReportePanel extends JPanel {
             }
         });
 
+        JScrollPane scroll = new JScrollPane(tabla);
+        UIEstilo.aplicarEstiloScrollPane(scroll);
+
         add(crearPanelFiltros(), BorderLayout.NORTH);
-        add(new JScrollPane(tabla), BorderLayout.CENTER);
-        add(lblInfo, BorderLayout.SOUTH);
+        add(scroll,              BorderLayout.CENTER);
+        add(lblInfo,             BorderLayout.SOUTH);
     }
 
     private JPanel crearPanelFiltros() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 5));
-        panel.setBorder(BorderFactory.createTitledBorder("Filtros del Reporte"));
+        panel.setBorder(UIEstilo.crearBordeTitulado("Filtros del Reporte"));
+        panel.setBackground(UIEstilo.FONDO);
 
         JButton btnGenerar = new JButton("Generar Reporte");
-        btnGenerar.setBackground(new Color(41, 128, 185));
-        btnGenerar.setForeground(Color.WHITE);
-        btnGenerar.setFont(btnGenerar.getFont().deriveFont(Font.BOLD));
+        UIEstilo.aplicarEstiloBoton(btnGenerar, UIEstilo.PRIMARIO);
         btnGenerar.addActionListener(e -> generarReporte());
 
         panel.add(new JLabel("Tipo de Reporte:"));          panel.add(cmbReporte);

@@ -101,3 +101,115 @@ ALTER TABLE PESAJES
   ADD COLUMN usuario_id BIGINT NOT NULL REFERENCES USUARIOS(id);
 
 CREATE INDEX idx_pesajes_usuario ON PESAJES(usuario_id);
+
+
+
+
+
+--ESQUEMA CON LA CREACIÓN INICIAL CORRECTA: 
+
+-- ============================================================
+--  Sistema de Gestión de Recolectores — Schema SQL completo
+--  Motor: MySQL 8.x
+--  Estado final tras todos los cambios aplicados.
+-- ============================================================
+
+CREATE DATABASE IF NOT EXISTS recolectores_db
+    CHARACTER SET utf8mb4
+    COLLATE utf8mb4_unicode_ci;
+
+USE recolectores_db;
+
+-- ── Tabla: LOTES ─────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS LOTES (
+    id          BIGINT       PRIMARY KEY AUTO_INCREMENT,
+    codigo      VARCHAR(10)  NOT NULL UNIQUE COMMENT 'Ej: A1, B2',
+    descripcion VARCHAR(200),
+    activo      TINYINT(1)   NOT NULL DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ── Tabla: USUARIOS ──────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS USUARIOS (
+    id       BIGINT       NOT NULL AUTO_INCREMENT,
+    username VARCHAR(50)  NOT NULL UNIQUE,
+    password VARCHAR(64)  NOT NULL COMMENT 'SHA-256 hex',
+    nombre   VARCHAR(100) NOT NULL,
+    activo   BOOLEAN      NOT NULL DEFAULT TRUE,
+    PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ── Tabla: RECOLECTORES ───────────────────────────────────────
+CREATE TABLE IF NOT EXISTS RECOLECTORES (
+    id      BIGINT       PRIMARY KEY AUTO_INCREMENT,
+    nombre  VARCHAR(100) NOT NULL,
+    cedula  VARCHAR(20)  NOT NULL UNIQUE,
+    lote_id BIGINT,
+    activo  TINYINT(1)   NOT NULL DEFAULT 1,
+    CONSTRAINT fk_recolector_lote FOREIGN KEY (lote_id) REFERENCES LOTES(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ── Tabla: PESAJES ────────────────────────────────────────────
+-- CAMBIOS: eliminado lote_id (se obtiene via recolector), agregado usuario_id
+CREATE TABLE IF NOT EXISTS PESAJES (
+    id            BIGINT        PRIMARY KEY AUTO_INCREMENT,
+    recolector_id BIGINT        NOT NULL,
+    usuario_id    BIGINT        NOT NULL COMMENT 'Usuario que registró el pesaje',
+    fecha         DATE          NOT NULL,
+    kilos         DECIMAL(10,2) NOT NULL,
+    CONSTRAINT fk_pesaje_recolector FOREIGN KEY (recolector_id) REFERENCES RECOLECTORES(id),
+    CONSTRAINT fk_pesaje_usuario    FOREIGN KEY (usuario_id)    REFERENCES USUARIOS(id),
+    CONSTRAINT chk_kilos_positivos  CHECK (kilos > 0)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ── Tabla: LIQUIDACIONES ──────────────────────────────────────
+-- Encabezado de cada liquidación guardada desde el módulo de Pagos
+CREATE TABLE IF NOT EXISTS LIQUIDACIONES (
+    id              BIGINT        PRIMARY KEY AUTO_INCREMENT,
+    fecha_desde     DATE          NOT NULL,
+    fecha_hasta     DATE          NOT NULL,
+    precio_por_kilo DECIMAL(10,2) NOT NULL,
+    fecha_registro  DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    usuario_id      BIGINT        NOT NULL,
+    CONSTRAINT fk_liquidacion_usuario FOREIGN KEY (usuario_id) REFERENCES USUARIOS(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ── Tabla: LIQUIDACION_DETALLE ────────────────────────────────
+-- Detalle por recolector de cada liquidación
+CREATE TABLE IF NOT EXISTS LIQUIDACION_DETALLE (
+    id             BIGINT        PRIMARY KEY AUTO_INCREMENT,
+    liquidacion_id BIGINT        NOT NULL,
+    recolector_id  BIGINT        NOT NULL,
+    total_kilos    DECIMAL(10,2) NOT NULL,
+    total_pago     DECIMAL(10,2) NOT NULL,
+    CONSTRAINT fk_detalle_liquidacion FOREIGN KEY (liquidacion_id) REFERENCES LIQUIDACIONES(id),
+    CONSTRAINT fk_detalle_recolector  FOREIGN KEY (recolector_id)  REFERENCES RECOLECTORES(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ── Índices para rendimiento ──────────────────────────────────
+CREATE INDEX IF NOT EXISTS idx_pesajes_fecha
+    ON PESAJES(fecha);
+CREATE INDEX IF NOT EXISTS idx_pesajes_recolector
+    ON PESAJES(recolector_id);
+CREATE INDEX IF NOT EXISTS idx_pesajes_usuario
+    ON PESAJES(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_liquidacion_usuario
+    ON LIQUIDACIONES(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_detalle_liquidacion
+    ON LIQUIDACION_DETALLE(liquidacion_id);
+CREATE INDEX IF NOT EXISTS idx_detalle_recolector
+    ON LIQUIDACION_DETALLE(recolector_id);
+
+-- ── Datos iniciales ───────────────────────────────────────────
+INSERT IGNORE INTO LOTES (codigo, descripcion) VALUES
+    ('A1', 'Lote norte - Sector 1'),
+    ('A2', 'Lote norte - Sector 2'),
+    ('B1', 'Lote sur  - Sector 1');
+
+-- Contraseña por defecto: Admin1234
+INSERT IGNORE INTO USUARIOS (username, password, nombre, activo)
+VALUES (
+    'admin',
+    '60fe74406e7f353ed979f350f2fbb6a2e8690a5fa7d1b0c32983d1d8b3f95f67',
+    'Administrador',
+    TRUE
+);
