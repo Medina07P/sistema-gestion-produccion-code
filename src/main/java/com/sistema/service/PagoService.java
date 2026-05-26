@@ -57,11 +57,19 @@ public class PagoService implements IPagoService {
         return pagos;
     }
 
-    // ✅ NUEVO: persiste la liquidación calculada
     @Override
     public void guardarLiquidacion(LocalDate inicio, LocalDate fin,
                                    double precioPorKilo, List<Pago> pagos,
                                    Usuario usuario) {
+        Validador.positivo(precioPorKilo, "precio por kilo");
+        Validador.rangoFechas(inicio, fin);
+        if (pagos == null || pagos.isEmpty()) {
+            throw new NegocioException("No hay pagos para guardar. Calcule primero.");
+        }
+        if (usuario == null) {
+            throw new NegocioException("No se identifica al usuario que registra la liquidación.");
+        }
+
         Liquidacion liq = new Liquidacion(inicio, fin, precioPorKilo, usuario);
 
         List<LiquidacionDetalle> detalles = new ArrayList<>();
@@ -75,5 +83,17 @@ public class PagoService implements IPagoService {
         }
         liq.setDetalles(detalles);
         liquidacionDAO.guardar(liq);
+    }
+
+    @Override
+    public void eliminarLiquidacion(Long id) {
+        if (id == null) throw new NegocioException("ID de liquidación no válido.");
+        liquidacionDAO.eliminar(id);
+    }
+
+    @Override
+    public void eliminarDetalleLiquidacion(Long detalleId) {
+        if (detalleId == null) throw new NegocioException("ID de detalle no válido.");
+        liquidacionDAO.eliminarDetalle(detalleId);
     }
 }

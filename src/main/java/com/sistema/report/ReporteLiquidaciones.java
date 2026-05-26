@@ -3,6 +3,7 @@ package com.sistema.report;
 import com.sistema.dao.ILiquidacionDAO;
 import com.sistema.model.Liquidacion;
 import com.sistema.model.LiquidacionDetalle;
+import com.sistema.service.IPagoService;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -11,17 +12,19 @@ import java.util.List;
 /**
  * Reporte: Historial de Liquidaciones guardadas.
  *
- * Columnas: Período | Precio x Kilo | Recolector | Total Kilos | Total Pago | Registrado por
+ * Columnas: ID | Período | Precio x Kilo | Recolector | Cédula | Total Kilos | Total Pago | Registrado por | Fecha Registro
  *
- * Muestra el precio que se pagó por kilo en cada liquidación histórica.
+ * La columna ID permite identificar la liquidación para eliminarla.
  * No usa el rango de fechas del filtro — muestra todo el historial.
  */
 public class ReporteLiquidaciones implements IReporteGenerador {
 
     private final ILiquidacionDAO liquidacionDAO;
+    private final IPagoService    pagoService;
 
-    public ReporteLiquidaciones(ILiquidacionDAO liquidacionDAO) {
+    public ReporteLiquidaciones(ILiquidacionDAO liquidacionDAO, IPagoService pagoService) {
         this.liquidacionDAO = liquidacionDAO;
+        this.pagoService    = pagoService;
     }
 
     @Override
@@ -32,7 +35,7 @@ public class ReporteLiquidaciones implements IReporteGenerador {
     @Override
     public String[] getColumnas() {
         return new String[]{
-            "Período", "Precio x Kilo", "Recolector", "Cédula",
+            "ID", "Período", "Precio x Kilo", "Recolector", "Cédula",
             "Total Kilos", "Total Pago", "Registrado por", "Fecha Registro"
         };
     }
@@ -50,6 +53,7 @@ public class ReporteLiquidaciones implements IReporteGenerador {
 
             for (LiquidacionDetalle detalle : liq.getDetalles()) {
                 filas.add(new Object[]{
+                    detalle.getId(),
                     periodo,
                     precioPorKilo,
                     detalle.getRecolector().getNombre(),
@@ -63,5 +67,15 @@ public class ReporteLiquidaciones implements IReporteGenerador {
         }
 
         return filas;
+    }
+
+    @Override
+    public boolean soportaEliminar() {
+        return true;
+    }
+
+    @Override
+    public void eliminar(Object idFila) {
+        pagoService.eliminarDetalleLiquidacion(((Number) idFila).longValue());
     }
 }

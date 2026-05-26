@@ -49,7 +49,7 @@ public class MainFrame extends JFrame {
         new ReportePorRecolector(pesajeDAO),
         new ReportePorLote(pesajeDAO),
         new ReportePorDia(pesajeDAO),
-        new ReporteLiquidaciones(liquidacionDAO)  // ✅ NUEVO
+        new ReporteLiquidaciones(liquidacionDAO, pagoService)
     );
 
         // ── 4. Paneles ────────────────────────────────────────
@@ -57,7 +57,7 @@ public class MainFrame extends JFrame {
         RecolectorPanel recolectorPanel = new RecolectorPanel(recolectorService, loteService);
         PesajePanel     pesajePanel     = new PesajePanel(pesajeService, recolectorService, loteService, usuario);
         PagoPanel       pagoPanel       = new PagoPanel(pagoService, usuario);   // ✅ CORREGIDO
-        ReportePanel    reportePanel    = new ReportePanel(reportes);
+        ReportePanel    reportePanel    = new ReportePanel(reportes, usuario);
 
         // ── 5. Tabs ───────────────────────────────────────────
         JTabbedPane tabs = new JTabbedPane();

@@ -11,7 +11,9 @@
         <class>com.sistema.model.Lote</class>
         <class>com.sistema.model.Recolector</class>
         <class>com.sistema.model.Pesaje</class>
-        <class>com.sistema.model.Usuario</class>   
+        <class>com.sistema.model.Usuario</class>
+        <class>com.sistema.model.Liquidacion</class>
+        <class>com.sistema.model.LiquidacionDetalle</class>
 
         <properties>
             <!--
