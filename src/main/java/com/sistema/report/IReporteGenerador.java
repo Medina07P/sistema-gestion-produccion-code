@@ -34,4 +34,15 @@ public interface IReporteGenerador {
      * @param fin    Fecha de fin (inclusiva)
      */
     List<Object[]> generarDatos(LocalDate inicio, LocalDate fin);
+
+    /** Indica si este reporte soporta la operación de eliminar registros. */
+    default boolean soportaEliminar() { return false; }
+
+    /**
+     * Elimina el registro identificado por {@code idFila} (valor de la primera columna).
+     * Solo invocable si {@link #soportaEliminar()} devuelve {@code true}.
+     */
+    default void eliminar(Object idFila) {
+        throw new UnsupportedOperationException("Este reporte no soporta eliminación.");
+    }
 }

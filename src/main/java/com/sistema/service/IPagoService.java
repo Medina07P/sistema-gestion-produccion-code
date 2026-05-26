@@ -8,8 +8,10 @@ import java.util.List;
 public interface IPagoService {
     List<Pago> calcularPagos(LocalDate inicio, LocalDate fin, double precioPorKilo);
 
-    // ✅ NUEVO
     void guardarLiquidacion(LocalDate inicio, LocalDate fin,
                             double precioPorKilo, List<Pago> pagos,
                             Usuario usuario);
+
+    void eliminarLiquidacion(Long id);
+    void eliminarDetalleLiquidacion(Long detalleId);
 }
