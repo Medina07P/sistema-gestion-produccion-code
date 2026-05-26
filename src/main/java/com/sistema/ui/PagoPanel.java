@@ -108,15 +108,22 @@ public class PagoPanel extends JPanel {
     // ── Lógica del panel ──────────────────────────────────────
 
     private void calcular() {
+        btnGuardar.setEnabled(false);
+        ultimoCalculo = new ArrayList<>();
         try {
-            ultimoInicio = Validador.parsearFecha(txtInicio.getText(), "fecha inicio");
-            ultimoFin    = Validador.parsearFecha(txtFin.getText(),    "fecha fin");
-            ultimoPrecio = Validador.parsearDouble(txtPrecio.getText(), "precio por kilo");
-            Validador.rangoFechas(ultimoInicio, ultimoFin);
+            LocalDate inicio = Validador.parsearFecha(txtInicio.getText(), "fecha inicio");
+            LocalDate fin    = Validador.parsearFecha(txtFin.getText(),    "fecha fin");
+            double precio    = Validador.parsearDouble(txtPrecio.getText(), "precio por kilo");
+            Validador.rangoFechas(inicio, fin);
 
-            ultimoCalculo = pagoService.calcularPagos(ultimoInicio, ultimoFin, ultimoPrecio);
-            mostrarPagos(ultimoCalculo, ultimoPrecio);
-            btnGuardar.setEnabled(true);  // ✅ habilitar solo tras calcular exitosamente
+            List<Pago> pagos = pagoService.calcularPagos(inicio, fin, precio);
+
+            ultimoInicio  = inicio;
+            ultimoFin     = fin;
+            ultimoPrecio  = precio;
+            ultimoCalculo = pagos;
+            mostrarPagos(pagos, precio);
+            btnGuardar.setEnabled(true);
 
         } catch (NegocioException ex) {
             mostrarError(ex.getMessage());
